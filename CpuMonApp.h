@@ -6,11 +6,18 @@
 #include "Mqtt.h"
 #include "Database.h"
 
-class CpuMonApp : public wxApp, public wxThreadHelper
+class CpuMonApp : public wxApp , public wxThreadHelper
 {
 public:
 	CpuMonApp();
 	~CpuMonApp();
+	
+	void Quit()
+	{
+		m_quit = true;
+		GetThread()->Wait();
+		m_tbIcon->Destroy();
+	}
 
 protected:
 	virtual bool OnInit();
@@ -18,24 +25,38 @@ protected:
 
 	virtual wxThread::ExitCode Entry()
 	{
-		Start();
+		if ( m_doPublish )
+		{
+			Publish();
+		}
+		else
+		{
+			Subscibe();
+		}
 		return 0;
 	};
 
 	void OnMqttError( wxThreadEvent & mqttErrEvent );
 	void OnMqttMessage( wxThreadEvent & mqttErrEvent );
 
-	void Start();
+	void Subscibe();
+	void Publish();
 
 	wxDECLARE_EVENT_TABLE();
 
 	bool CreateDatabase();
-	bool MqttSubscribe();
 
-	Mqtt  m_mqtt;
-	Database  m_database;
+	wxUint32  GetMemoryUsage();
+	wxUint32  GetCpuUsage();
 
-	wxTaskBarIcon  m_tbIcon;
+	volatile bool  m_quit;
+	Mqtt           m_mqtt;
+	Database       m_database;
+	bool           m_doPublish;
+	wxString       m_server;
+	wxUint32       m_port;
+
+	wxTaskBarIcon * m_tbIcon;
 };
 
 DECLARE_APP( CpuMonApp );

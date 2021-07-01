@@ -102,7 +102,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(WXDIR)\lib\vc_lib;C:\Code\Libraries\mosquitto-2.0.7\vs\lib\Debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>mosquitto_static.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
