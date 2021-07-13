@@ -54,7 +54,7 @@ bool CpuMonApp::OnInit()
 	m_tbIcon = new wxTaskBarIcon;
 	m_tbIcon->SetIcon( wxIcon( _T("TBICON") ) );
 #else
-	m_tbIcon.SetIcon( wxIcon( tbicon ) );
+	m_tbIcon->SetIcon( wxIcon( tbicon ) );
 #endif
 	tmpFrame * frame = new tmpFrame;
 	frame->Show();
