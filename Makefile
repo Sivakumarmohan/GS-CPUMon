@@ -24,5 +24,5 @@ all: $(OBJ_FILES)
 $(OBJ_FILES): $(SRC_FILES) 
 	$(CC) -c $(SRC_FILES) $(CFLAGS) $(CPPFLAGS) $(INC_FILES)
 clean:
-	rm -rf *.o cpumon
+	rm -rf *.o CpuMon
 

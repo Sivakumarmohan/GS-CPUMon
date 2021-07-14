@@ -50,8 +50,8 @@ CpuMonApp::~CpuMonApp()
 
 bool CpuMonApp::OnInit()
 {
-#ifdef __WXMSW__
 	m_tbIcon = new wxTaskBarIcon;
+#ifdef __WXMSW__
 	m_tbIcon->SetIcon( wxIcon( _T("TBICON") ) );
 #else
 	m_tbIcon->SetIcon( wxIcon( tbicon ) );
