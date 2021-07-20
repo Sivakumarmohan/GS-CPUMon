@@ -24,12 +24,11 @@ bool Database::Create( const char* connString )
 	}
 
 	char sqlCreateTableQuery[] =
-		"CREATE TABLE IF NOT EXISTS CPU_STATE("
-		"idx INT IDENTITY( 1, 1 ),"
-		"RecTime DATETIME,"
-		"Usage  INTEGER,"
-		"Temperature INTEGER,"
-		"MemUsage INTEGER"
+		"CREATE TABLE IF NOT EXISTS MACHINE_STATUS("
+		"RecDateTime     DATETIME,"
+		"CpuUsage        INTEGER,"
+		"CpuTemperature  INTEGER,"
+		"MemUsage        INTEGER"
 		");";
 
 	int sqlResult = sqlite3_exec( m_dbImpl,

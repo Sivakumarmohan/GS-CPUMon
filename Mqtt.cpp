@@ -37,6 +37,25 @@ bool Mqtt::Init()
 	return true;
 }
 
+bool Mqtt::Connect( const char * host, int port, int keepAlive )
+{
+	if ( MOSQ_ERR_SUCCESS != mosquitto_connect( m_mqttSession, host, port, keepAlive ) )
+	{
+		int errCode = errno;
+		wxString msg;
+		msg.Printf( _T( "mosquitto_connect failed. (%d)" ), errCode );
+		ReportError( msg.mb_str() );
+		return false;
+	}
+	return true;
+}
+
+bool Mqtt::Loop( int timeout )
+{
+	int rc = mosquitto_loop( m_mqttSession, timeout, 1 );
+	return (rc == MOSQ_ERR_SUCCESS);
+}
+
 bool Mqtt::Subscribe( const char * host, int port, const char * topic, int keepAlive, int qos )
 {
 	mosquitto_subscribe_callback_set( m_mqttSession,  OnSubscribe );
@@ -47,22 +66,52 @@ bool Mqtt::Subscribe( const char * host, int port, const char * topic, int keepA
 	if ( MOSQ_ERR_SUCCESS != mosquitto_connect( m_mqttSession, host, port, keepAlive ) )
 	{
 		int errCode = errno;
-		ReportError( "mosquitto_connect failed." );
+		wxString msg;
+		msg.Printf( _T( "mosquitto_connect failed. (%d)" ), errCode );
+		ReportError( msg.mb_str() );
 		ready = false;
 	}
 	else if ( MOSQ_ERR_SUCCESS != mosquitto_subscribe( m_mqttSession, nullptr, topic, qos ) )
 	{
 		int errCode = errno;
-		ReportError( "mosquitto_subscribe failed." );
+		wxString msg;
+		msg.Printf( _T( "mosquitto_subscribe failed. (%d)" ), errCode );
+		ReportError( msg.mb_str() );
 		ready = false;
 	}
 
 	if ( ready )
 	{
-		mosquitto_loop_forever( m_mqttSession, -1, 1 );
+		//mosquitto_loop_forever( m_mqttSession, -1, 1 );
 		return true;
 	}
 	return false;
+}
+
+bool Mqtt::Publish( const char * host, int port, const char* topic, const char* message, int keepAlive, int qos )
+{
+	bool done = true, connected = true;
+	/*if ( MOSQ_ERR_SUCCESS != mosquitto_connect( m_mqttSession, host, port, keepAlive ) )
+	{
+		int errCode = errno;
+		ReportError( "mosquitto_connect failed." );
+		done = false;
+		connected = false;
+	}*/
+	if ( connected )
+	{
+		if ( MOSQ_ERR_SUCCESS != mosquitto_publish( m_mqttSession, nullptr, topic,
+				strlen( message ), message, qos, true ) )
+		{
+			int errCode = errno;
+			wxString msg;
+			msg.Printf( _T( "mosquitto_publish failed. (%d)" ), errCode );
+			ReportError( msg.mb_str() );
+			done = false;
+		}
+		/*mosquitto_disconnect( m_mqttSession );*/
+	}
+	return done;
 }
 
 void Mqtt::Start()

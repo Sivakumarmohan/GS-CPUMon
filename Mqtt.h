@@ -5,14 +5,21 @@
 wxDECLARE_EVENT( EVT_MQTT_ERROR, wxThreadEvent );
 wxDECLARE_EVENT( EVT_MQTT_MESSG, wxThreadEvent );
 
-class Mqtt
+class Mqtt/* : public wxThreadHelper*/
 {
 public:
 	Mqtt( wxEvtHandler * handler );
 	~Mqtt();
 
 	bool Init();
-	bool Subscribe( const char* host, int port, const char* topic, int keepAlive = 10, int qos = 2 );
+	bool Connect( const char* host, int port, int keepAlive = 10 );
+	bool Loop( int timeout = 10 );
+	bool Subscribe( const char * host, int port,
+		const char * topic,
+		int keepAlive = 10, int qos = 2 );
+	bool Publish( const char * host, int port,
+		const char * topic, const char * message,
+		int keepAlive = 10, int qos = 2 );
 
 protected:
 	wxEvtHandler *  m_msgHandler;
