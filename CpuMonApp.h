@@ -19,6 +19,7 @@ public:
 		m_tbIcon->Destroy();
 	}
 
+        wxString getVersion();
 protected:
 	virtual bool OnInit();
 	virtual int  OnExit();

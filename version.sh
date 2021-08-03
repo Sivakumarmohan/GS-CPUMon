@@ -10,4 +10,5 @@ else
 	GIT_HASH=`git rev-parse --short HEAD`
 	DEV_VER=$BRANCH'_'$GIT_HASH
 fi
-echo $DEV_VER
+export VERSION_SUFFIX=$DEV_VER
+echo $VERSION_SUFFIX
