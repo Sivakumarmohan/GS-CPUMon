@@ -55,6 +55,9 @@ END
 TBICON                  ICON                    "tbicon.ico"
 
 
+#include "version.rc2"
+
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
