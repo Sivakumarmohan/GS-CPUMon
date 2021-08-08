@@ -1,5 +1,6 @@
 #include <mosquitto.h>
 #include <wx/tokenzr.h>
+#include "version.h"
 
 #ifdef __WXMSW__
 #include "sqlite/sqlite3.h"
@@ -13,6 +14,8 @@
 #ifdef __WXGTK__
 #include "tbicon.xpm"
 #endif
+
+using namespace std;
 
 const char g_Topic[] = "MACHINE_STATUS";
 
@@ -197,3 +200,14 @@ bool CpuMonApp::CreateDatabase()
 {
 	return m_database.Create( "macstat.db" );
 }
+wxString CpuMonApp::getVersion()
+{
+      wxString versionStr;
+#ifdef __WXMSW__
+      versionStr =  std::to_string(MAJOR_VERSION) + '.' + std::to_string(MINOR_VERSION);
+#else
+      versionStr =  std::to_string(MAJOR_VERSION) + '.' + std::to_string(MINOR_VERSION);
+#endif
+      return versionStr;
+}
+
