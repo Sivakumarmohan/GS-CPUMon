@@ -8,6 +8,8 @@
 #endif
 
 #include "CpuMonApp.h"
+#include "Platform.h"
+
 #ifdef __WXGTK__
 #include "tbicon.xpm"
 #endif
@@ -31,6 +33,7 @@ public:
 IMPLEMENT_APP( CpuMonApp );
 
 wxBEGIN_EVENT_TABLE( CpuMonApp, wxApp )
+	EVT_MENU( wxID_OPEN, CpuMonApp::OnOpen )
 	//EVT_THREAD( EVT_MQTT_ERROR, CpuMonApp::OnMqttError )
 	//EVT_THREAD( EVT_MQTT_MESSG, CpuMonApp::OnMqttMessage )
 wxEND_EVENT_TABLE()
@@ -40,7 +43,8 @@ CpuMonApp::CpuMonApp() : wxThreadHelper( wxTHREAD_JOINABLE ),
 	m_mqtt( this ),
 	m_doPublish( false ),
 	m_server( _T("127.0.0.1") ),
-	m_port( 1884 )
+	m_port( 1884 ),
+	m_tbIcon( nullptr )
 {
 }
 
@@ -50,28 +54,13 @@ CpuMonApp::~CpuMonApp()
 
 bool CpuMonApp::OnInit()
 {
-	m_tbIcon = new wxTaskBarIcon;
-#ifdef __WXMSW__
-	m_tbIcon->SetIcon( wxIcon( _T("TBICON") ) );
-#else
-	m_tbIcon->SetIcon( wxIcon( tbicon ) );
-#endif
+	ArgCheck();
+
 	tmpFrame * frame = new tmpFrame;
 	frame->Show();
 	SetTopWindow( frame );
 
-	if ( argc > 1 )
-	{
-		const wxArrayString& args = argv.GetArguments();
-		if ( wxStrcmp( args[1], "/pub" ) == 0 )
-		{
-			m_doPublish = true;
-		}
-		if ( argc > 2 )
-			m_server = args[2];
-		if ( argc > 3 )
-			m_port = wxAtoi( args[3] );
-	}
+	SetupTaskbarIcon();
 
 	CreateThread();
 	GetThread()->Run();
@@ -82,6 +71,23 @@ bool CpuMonApp::OnInit()
 int CpuMonApp::OnExit()
 {
 	return 0;
+}
+
+void CpuMonApp::SetupTaskbarIcon()
+{
+	m_tbIcon = new CpuMonTaskbarIcon( this );
+#ifdef __WXMSW__
+	m_tbIcon->SetIcon( wxIcon( _T( "TBICON" ) ) );
+#else
+	m_tbIcon->SetIcon( wxIcon( tbicon ) );
+#endif
+
+	m_tbIcon->Bind( wxEVT_TASKBAR_LEFT_DCLICK, &CpuMonApp::OnTaskbarDblClick, this );
+}
+
+void CpuMonApp::OnOpen( wxCommandEvent& commandEvent )
+{
+	wxMessageBox( "open" );
 }
 
 void CpuMonApp::OnMqttError( wxThreadEvent & mqttErrEvent )
@@ -108,11 +114,23 @@ void CpuMonApp::OnMqttMessage( wxThreadEvent & mqttMesgEvent )
 	m_database.ExecSql( sql.mb_str() );
 }
 
+void CpuMonApp::OnTaskbarDblClick( wxTaskBarIconEvent& taskBarEvent )
+{
+	wxMessageBox( "click" );
+}
+
+wxMenu* CpuMonApp::CreatePopupMenu()
+{
+	wxMenu* menu = new wxMenu;
+	menu->Append( wxID_OPEN, _("Open") );
+	menu->Append( wxID_EXIT, _("Close") );
+    return menu;
+}
+
 void CpuMonApp::Subscibe()
 {
 	CreateDatabase();
-	Bind( EVT_MQTT_ERROR, &CpuMonApp::OnMqttError, this );
-	Bind( EVT_MQTT_MESSG, &CpuMonApp::OnMqttMessage, this );
+	BindMqttMessages();
 
 	m_mqtt.Init();
 	m_mqtt.Subscribe( m_server, m_port, g_Topic );
@@ -126,6 +144,7 @@ void CpuMonApp::Subscibe()
 
 void CpuMonApp::Publish()
 {
+	BindMqttMessages();
 	if ( !m_mqtt.Init() || !m_mqtt.Connect( m_server, m_port ) )
 		return;
 
@@ -136,12 +155,12 @@ void CpuMonApp::Publish()
 			break;
 
 		wxSleep( 10 );
-		wxUint32  memUsage = GetMemoryUsage();
-		wxUint32  cpuUsage = GetCpuUsage();
+		wxUint32  memUsage = Platform::GetMemoryUsage();
+		wxUint32  cpuUsage = Platform::GetCpuUsage();
 		wxUint32  cpuTemp  = 0;
 
 		wxDateTime msgDate = wxDateTime::Now();
-		sprintf( message, "20%d/%02d/%02d %02d:%02d:%02d,%02d,%02d,%02d", 
+		sprintf( message, "%d/%02d/%02d %02d:%02d:%02d,%02d,%02d,%02d", 
 			msgDate.GetYear(), msgDate.GetMonth(), msgDate.GetDay(),
 			msgDate.GetHour(), msgDate.GetMinute(), msgDate.GetSecond(),
 			cpuUsage,
@@ -152,48 +171,29 @@ void CpuMonApp::Publish()
 	}
 }
 
+void CpuMonApp::ArgCheck()
+{
+	if ( argc > 1 )
+	{
+		const wxArrayString& args = argv.GetArguments();
+		if ( wxStrcmp( args[1], "/pub" ) == 0 )
+		{
+			m_doPublish = true;
+		}
+		if ( argc > 2 )
+			m_server = args[2];
+		if ( argc > 3 )
+			m_port = wxAtoi( args[3] );
+	}
+}
+
+void CpuMonApp::BindMqttMessages()
+{
+	Bind( EVT_MQTT_ERROR, &CpuMonApp::OnMqttError,   this );
+	Bind( EVT_MQTT_MESSG, &CpuMonApp::OnMqttMessage, this );
+}
+
 bool CpuMonApp::CreateDatabase()
 {
 	return m_database.Create( "macstat.db" );
 }
-
-wxUint32 CpuMonApp::GetMemoryUsage()
-{
-#ifdef __WXMSW__
-	MEMORYSTATUSEX memStat;
-	memStat.dwLength = sizeof( memStat );
-	::GlobalMemoryStatusEx( & memStat );
-	return wxUint32( memStat.dwMemoryLoad );
-#else
-	return 2300;
-#endif
-}
-
-wxUint32 CpuMonApp::GetCpuUsage()
-{
-#ifdef __WXMSW__
-	static FILETIME prevIdleTime;
-	static FILETIME prevKernelTime;
-	static FILETIME prevUserTime;
-
-	FILETIME idleTime;
-	FILETIME kernelTime;
-	FILETIME userTime;
-	BOOL ret = GetSystemTimes( & idleTime, & kernelTime, & userTime );
-
-	__int64 idle   = CompareFileTime( & prevIdleTime,  & idleTime );
-	__int64 kernel = CompareFileTime( & prevKernelTime, & kernelTime );
-	__int64 user   = CompareFileTime( & prevUserTime,  & userTime );
-
-	float rate = (kernel + user - idle) / (1.0 * (kernel + user));
-
-	prevIdleTime   = idleTime;
-	prevKernelTime = kernelTime;
-	prevUserTime   = userTime;
-	
-	return wxUint32( rate );
-#else
-	return 0;
-#endif
-}
-

@@ -158,19 +158,24 @@
     <ClInclude Include="Database.h" />
     <ClInclude Include="Mqtt.h" />
     <ClInclude Include="CpuMonApp.h" />
+    <ClInclude Include="Platform.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h" />
     <ClInclude Include="sqlite\sqlite3.h" />
     <ClInclude Include="sqlite\sqlite3ext.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Database.cpp" />
     <ClCompile Include="Mqtt.cpp" />
     <ClCompile Include="CpuMonApp.cpp" />
+    <ClCompile Include="Platform.cpp" />
     <ClCompile Include="sqlite\shell.c" />
     <ClCompile Include="sqlite\sqlite3.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CpuMon.rc" />
+    <ResourceCompile Include="Version.rc2" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resource\cpumon.ico" />
